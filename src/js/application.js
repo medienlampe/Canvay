@@ -15,7 +15,7 @@
     oSelf.oConfig = oConfig || {
       nCellSize: 10,
       nOffset: .5,
-      nWeight: .545, 
+      iRandomShapes: 30, // more blank space if bigger than actual defined shapes
       sForegroundColor: 'rgba(0,255,0,1)',
       nLineWidth: 1
     };
@@ -33,6 +33,7 @@
 
     oSelf.aMap = [];
     oSelf.aNewMap = [];
+    oSelf.aMapInitialized = []; // to prevent overriding
 
     oSelf.nMapHeight = Math.floor(oSelf.nCanvasHeight/oSelf.nCellSize);
     oSelf.nMapWidth = Math.floor(oSelf.nCanvasWidth/oSelf.nCellSize)
@@ -43,13 +44,182 @@
     }
 
     for (var i = oSelf.aMap.length - 1; i >= 0; i--) {
+      if (!oSelf.aMapInitialized[i]) {
+          oSelf.aMapInitialized[i] = []; // dynamic initialization (otherwise it had to be initialized in another loop)
+      }
       for (var j = oSelf.aMap[i].length - 1; j >= 0; j--) {
-        oSelf.aMap[i][j] = !!Math.round(Math.random()*oSelf.nWeight);
+        if (!(oSelf.aMapInitialized[i][j])) { // make sure the coordinates haven't already been initialized
+            oSelf.initialize(oSelf.aMap, i, j);
+        }
       }
     }
 
     return oSelf;
   };
+
+  /**
+   * ConwaysCanvas.prototype.initialize
+   *
+   * @description Initializes a shape at given coordinates
+   *
+   * @return {*} Canvay
+   */
+  ConwaysCanvas.prototype.initialize = function(aMap, x, y){
+    var oSelf = this,
+        iShape = 0,
+        aShape = [];
+
+    iShape = Math.round(Math.random() * oSelf.oConfig.iRandomShapes); // bigger iRandomShapes = more free space
+    aShape = oSelf.getShape(iShape);
+
+    for (var i = aShape.length - 1; i >= 0; i--) {
+      for (var j = aShape[i].length - 1; j >= 0; j--) {
+        if (aMap[x-i] && !(oSelf.aMapInitialized[x-i] && oSelf.aMapInitialized[x-i][y-j])) {
+          aMap[x-i][y-j] = aShape[i][j];
+        }
+        if (!oSelf.aMapInitialized[x-i]) {
+          oSelf.aMapInitialized[x-i] = [];
+        }
+        oSelf.aMapInitialized[x-i][y-j] = true;
+      }
+    }
+
+    return oSelf;
+  }
+
+  /**
+   * ConwaysCanvas.prototype.getShape
+   *
+   * @description Returns a shape array by given number
+   *
+   * @return [*] Array
+   */
+  ConwaysCanvas.prototype.getShape = function(i){
+    var aShape = [];
+
+    switch(i) {
+      case 0: // Random @TODO: Implement
+        break;
+      case 1: // Block
+        aShape[0] = [0,0,0,0];
+        aShape[1] = [0,1,1,0];
+        aShape[2] = [0,1,1,0];
+        aShape[3] = [0,0,0,0];
+        break;
+      case 2: // Beehive
+        aShape[0] = [0,0,0,0,0,0];
+        aShape[1] = [0,0,1,1,0,0];
+        aShape[2] = [0,1,0,0,1,0];
+        aShape[3] = [0,0,1,1,0,0];
+        aShape[4] = [0,0,0,0,0,0];
+        break;
+      case 3: // Loaf
+        aShape[0] = [0,0,0,0,0,0];
+        aShape[1] = [0,0,1,1,0,0];
+        aShape[2] = [0,1,0,0,1,0];
+        aShape[3] = [0,0,1,0,1,0];
+        aShape[4] = [0,0,0,1,0,0];
+        aShape[5] = [0,0,0,0,0,0];
+        break;
+      case 4: // Boat
+        aShape[0] = [0,0,0,0,0];
+        aShape[1] = [0,1,1,0,0];
+        aShape[2] = [0,1,0,1,0];
+        aShape[3] = [0,0,1,0,0];
+        aShape[4] = [0,0,0,0,0];
+        break;
+      case 5: // Tub
+        aShape[0] = [0,0,0,0,0];
+        aShape[1] = [0,0,1,0,0];
+        aShape[2] = [0,1,0,1,0];
+        aShape[3] = [0,0,1,0,0];
+        aShape[4] = [0,0,0,0,0];
+        break;
+      case 6: // Blinker a
+        aShape[0] = [0,0,0,0,0];
+        aShape[1] = [0,0,0,0,0];
+        aShape[2] = [0,1,1,1,0];
+        aShape[3] = [0,0,0,0,0];
+        aShape[4] = [0,0,0,0,0];
+        break;
+      case 7: // Blinker b
+        aShape[0] = [0,0,0,0,0];
+        aShape[1] = [0,0,1,0,0];
+        aShape[2] = [0,0,1,0,0];
+        aShape[3] = [0,0,1,0,0];
+        aShape[4] = [0,0,0,0,0];
+        break;
+      case 8: // Toad a
+        aShape[0] = [0,0,0,0,0,0];
+        aShape[1] = [0,0,0,0,0,0];
+        aShape[2] = [0,0,1,1,1,0];
+        aShape[3] = [0,1,1,1,0,0];
+        aShape[4] = [0,0,0,0,0,0];
+        aShape[5] = [0,0,0,0,0,0];
+        break;
+      case 9: // Toad b
+        aShape[0] = [0,0,0,0,0,0];
+        aShape[1] = [0,0,0,1,0,0];
+        aShape[2] = [0,1,0,0,1,0];
+        aShape[3] = [0,1,0,0,1,0];
+        aShape[4] = [0,0,1,0,0,0];
+        aShape[5] = [0,0,0,0,0,0];
+        break;
+      case 10: // Beacon a
+        aShape[0] = [0,0,0,0,0,0];
+        aShape[1] = [0,1,1,0,0,0];
+        aShape[2] = [0,1,1,0,0,0];
+        aShape[3] = [0,0,0,1,1,0];
+        aShape[4] = [0,0,0,1,1,0];
+        aShape[5] = [0,0,0,0,0,0];
+        break;
+      case 11: // Beacon b
+        aShape[0] = [0,0,0,0,0,0];
+        aShape[1] = [0,1,1,0,0,0];
+        aShape[2] = [0,1,0,0,0,0];
+        aShape[3] = [0,0,0,0,1,0];
+        aShape[4] = [0,0,0,1,1,0];
+        aShape[5] = [0,0,0,0,0,0];
+        break;
+      case 12: // Pulsar
+        aShape[0]  = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+        aShape[1]  = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+        aShape[2]  = [0,0,0,0,1,1,1,0,0,0,1,1,1,0,0,0,0];
+        aShape[3]  = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+        aShape[4]  = [0,0,1,0,0,0,0,1,0,1,0,0,0,0,1,0,0];
+        aShape[5]  = [0,0,1,0,0,0,0,1,0,1,0,0,0,0,1,0,0];
+        aShape[6]  = [0,0,1,0,0,0,0,1,0,1,0,0,0,0,1,0,0];
+        aShape[7]  = [0,0,0,0,1,1,1,0,0,0,1,1,1,0,0,0,0];
+        aShape[8]  = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+        aShape[9]  = [0,0,0,0,1,1,1,0,0,0,1,1,1,0,0,0,0];
+        aShape[10] = [0,0,1,0,0,0,0,1,0,1,0,0,0,0,1,0,0];
+        aShape[11] = [0,0,1,0,0,0,0,1,0,1,0,0,0,0,1,0,0];
+        aShape[12] = [0,0,1,0,0,0,0,1,0,1,0,0,0,0,1,0,0];
+        aShape[13] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+        aShape[14] = [0,0,0,0,1,1,1,0,0,0,1,1,1,0,0,0,0];
+        aShape[15] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+        aShape[16] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+        break;
+//      case 13: // Pentadecathlon
+// @TODO: Implement from: https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life
+      case 14: // Glider a
+        aShape[0] = [0,0,0,0,0];
+        aShape[1] = [0,0,1,0,0];
+        aShape[2] = [0,0,0,1,0];
+        aShape[3] = [0,1,1,1,0];
+        aShape[4] = [0,0,0,0,0];
+        break;
+      default:
+        aShape[0] = [0,0,0,0,0,0];
+        aShape[1] = [0,0,0,0,0,0];
+        aShape[2] = [0,0,0,0,0,0];
+        aShape[3] = [0,0,0,0,0,0];
+        aShape[4] = [0,0,0,0,0,0];
+        aShape[5] = [0,0,0,0,0,0];
+    }
+
+    return aShape;
+  }
 
   /**
    * ConwaysCanvas.prototype.reset
