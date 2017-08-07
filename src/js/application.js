@@ -32,12 +32,20 @@
     oSelf.oCanvas.lineWidth = oSelf.oConfig.nLineWidth;
 
     oSelf.aMap = [];
+    oSelf.aNewMap = [];
 
     oSelf.nMapHeight = Math.floor(oSelf.nCanvasHeight/oSelf.nCellSize);
     oSelf.nMapWidth = Math.floor(oSelf.nCanvasWidth/oSelf.nCellSize)
 
     for (var i = oSelf.nMapWidth; i >= 0; i--) {
       oSelf.aMap[i] = new Array(oSelf.nMapHeight)
+      oSelf.aNewMap[i] = new Array(oSelf.nMapHeight)
+    }
+
+    for (var i = oSelf.aMap.length - 1; i >= 0; i--) {
+      for (var j = oSelf.aMap[i].length - 1; j >= 0; j--) {
+        oSelf.aMap[i][j] = !!Math.round(Math.random()*oSelf.nWeight);
+      }
     }
 
     return oSelf;
@@ -73,9 +81,11 @@
 
     for (var i = oSelf.aMap.length - 1; i >= 0; i--) {
       for (var j = oSelf.aMap[i].length - 1; j >= 0; j--) {
-        oSelf.aMap[i][j] = callback(oSelf.aMap[i][j], i, j);
+        oSelf.aNewMap[i][j] = callback(oSelf.aMap[i][j], i, j);
       }
     }
+
+    oSelf.aMap = JSON.parse(JSON.stringify(oSelf.aNewMap));
 
     return oSelf;
   };
@@ -112,16 +122,6 @@
 
     oSelf.reset();
     oSelf.drawGrid();
-
-    oSelf.iterateMap(function(bValue, nX, nY){
-      bValue = !!Math.round(Math.random()*oSelf.nWeight);
-
-      if (bValue) {
-        oSelf.drawCircleAt(nX, nY);
-      }
-
-      return bValue;
-    });
 
     return oSelf;
   };
