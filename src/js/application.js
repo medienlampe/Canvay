@@ -16,6 +16,8 @@
       nCellSize: 10,
       nOffset: .5,
       iRandomShapes: 30, // more blank space if bigger than actual defined shapes
+      iRandomShapeMaxX: 5,
+      iRandomShapeMaxY: 5,
       sForegroundColor: 'rgba(0,255,0,1)',
       nLineWidth: 1
     };
@@ -88,6 +90,213 @@
   }
 
   /**
+   * ConwaysCanvas.prototype.reset
+   *
+   * @description Resets the canvas for redrawing.
+   *
+   * @return {*} Canvay
+   */
+  ConwaysCanvas.prototype.reset = function(){
+    var oSelf = this,
+        oCanvas = oSelf.oCanvas;
+
+    oCanvas.clearRect(0, 0, oSelf.nCanvasWidth, oSelf.nCanvasHeight);
+
+    return oSelf;
+  }
+
+  /**
+   * ConwaysCanvas.prototype.iterateMap
+   *
+   * @description Iterates over the map, setting living state of each cell
+   *
+   * @return {*} Canvay
+   */
+  ConwaysCanvas.prototype.iterateMap = function(callback){
+    var oSelf = this;
+
+    callback = callback || function(bValue, nX, nY){ return bValue; };
+
+    for (var i = oSelf.aMap.length - 1; i >= 0; i--) {
+      for (var j = oSelf.aMap[i].length - 1; j >= 0; j--) {
+        oSelf.aNewMap[i][j] = callback(oSelf.aMap[i][j], i, j);
+      }
+    }
+
+    oSelf.aMap = JSON.parse(JSON.stringify(oSelf.aNewMap));
+
+    return oSelf;
+  };
+
+  /**
+   * ConwaysCanvas.prototype.drawCircleAt
+   *
+   * @description Draws a circle at the given coordinates.
+   *
+   * @return {*} Canvay
+   */
+  ConwaysCanvas.prototype.drawCircleAt = function(nXPos, nYPos){
+    var oSelf = this,
+        oCanvas = oSelf.oCanvas,
+        nXPos = nXPos * oSelf.nCellSize + oSelf.nCellSize/2,
+        nYPos = nYPos * oSelf.nCellSize + oSelf.nCellSize/2;
+
+    oCanvas.beginPath();
+    oCanvas.arc(nXPos, nYPos, oSelf.nCellSize/2, 0, 2*Math.PI);
+    oCanvas.fill();
+
+    return oSelf;
+  };
+
+  /**
+   * ConwaysCanvas.prototype.setup
+   *
+   * @description Bootstraps the logic.
+   *
+   * @return {*} Canvay
+   */
+  ConwaysCanvas.prototype.setup = function(){
+    var oSelf = this;
+
+    oSelf.reset();
+    oSelf.drawGrid();
+
+    return oSelf;
+  };
+
+  /**
+   * ConwaysCanvas.prototype.drawGrid
+   *
+   * @description Draws the given grid.
+   *
+   * @return {*} Canvay
+   */
+  ConwaysCanvas.prototype.drawGrid = function(){
+    var oSelf = this,
+        oCanvas = oSelf.oCanvas;
+
+    for (
+      var nPointer = 0;
+      nPointer < Math.round(oSelf.nCanvasHeight/oSelf.nCellSize);
+      nPointer++
+    ) {
+        var nCurrentPosition = nPointer * oSelf.nCellSize - oSelf.nOffset;
+        oCanvas.beginPath();
+        oCanvas.moveTo(oSelf.nOffset, nCurrentPosition);
+        oCanvas.lineTo(oSelf.nCanvasWidth, nCurrentPosition);
+        oCanvas.stroke();
+    }
+
+    for (
+      var nPointer = 0;
+      nPointer < Math.round(oSelf.nCanvasWidth/oSelf.nCellSize);
+      nPointer++
+    ) {
+        var nCurrentPosition = nPointer * oSelf.nCellSize - oSelf.nOffset;
+        oCanvas.beginPath();
+        oCanvas.moveTo(nCurrentPosition, oSelf.nOffset);
+        oCanvas.lineTo(nCurrentPosition, oSelf.nCanvasHeight);
+        oCanvas.stroke();
+    }
+
+    return oSelf;
+  };
+
+  /**
+   * ConwaysCanvas.prototype.countNeighbours
+   *
+   * @description Counts and returns the amount of neighbours for a given cell.
+   *
+   * @return {Number} nNeighbourCount
+   */
+  ConwaysCanvas.prototype.countNeighbours = function(nXPos, nYPos){
+    var oSelf = this,
+        aMap = oSelf.aMap,
+        nNeighbourCount = 0;
+
+    nNeighbourCount += (aMap[nXPos-1] && aMap[nXPos-1][nYPos-1]) ? 1 : 0;
+    nNeighbourCount += (aMap[nXPos-1] && aMap[nXPos-1][nYPos]) ? 1 : 0;
+    nNeighbourCount += (aMap[nXPos-1] && aMap[nXPos-1][nYPos+1]) ? 1 : 0;
+    nNeighbourCount += (aMap[nXPos] && aMap[nXPos][nYPos-1]) ? 1 : 0;
+    nNeighbourCount += (aMap[nXPos] && aMap[nXPos][nYPos+1]) ? 1 : 0;
+    nNeighbourCount += (aMap[nXPos+1] && aMap[nXPos+1][nYPos-1]) ? 1 : 0;
+    nNeighbourCount += (aMap[nXPos+1] && aMap[nXPos+1][nYPos]) ? 1 : 0;
+    nNeighbourCount += (aMap[nXPos+1] && aMap[nXPos+1][nYPos+1]) ? 1 : 0;
+
+    return nNeighbourCount;
+  };
+
+  /**
+   * ConwaysCanvas.prototype.checkLivingState
+   *
+   * @description Checks whether a cell is alive or dead, draws a circle if it's alive.
+   *
+   * @return {Boolean} bIsAlive
+   */
+  ConwaysCanvas.prototype.checkLivingState = function(bIsAlive, nXPos, nYPos){
+    var oSelf = this,
+        nNeighbourCount = oSelf.countNeighbours(nXPos, nYPos);
+
+    if (nNeighbourCount < 2) {
+      bIsAlive = false;
+    } else if (!bIsAlive && nNeighbourCount === 3) {
+      bIsAlive = true;
+    } else if (bIsAlive && (nNeighbourCount === 3 || nNeighbourCount === 2)) {
+      bIsAlive = true;
+    } else if (nNeighbourCount > 3) {
+      bIsAlive = false;
+    };
+
+    if (bIsAlive) {
+      oSelf.drawCircleAt(nXPos, nYPos);
+    }
+
+    return bIsAlive;
+  };
+
+  /**
+   * ConwaysCanvas.prototype.play
+   *
+   * @description Plays one round of CGoL.
+   *
+   * @return {*} Canvay
+   */
+  ConwaysCanvas.prototype.play = function(){
+    var oSelf = this;
+
+    oSelf.reset();
+    oSelf.drawGrid();
+    oSelf.iterateMap(function(bIsAlive, nXPos, nYPos){
+      return oSelf.checkLivingState(bIsAlive, nXPos, nYPos);
+    });
+
+    return oSelf;
+  }
+
+  /**
+   * ConwaysCanvas.prototype.getRandomShape
+   *
+   * @description Returns a random shape array by given or random dimensions
+   *
+   * @return [*] Array
+   */
+  ConwaysCanvas.prototype.getRandomShape = function(iSetX, iSetY){
+    var oSelf = this,
+        x = iSetX || Math.ceil(Math.random() * oSelf.oConfig.iRandomShapeMaxX),
+        y = iSetY || Math.ceil(Math.random() * oSelf.oConfig.iRandomShapeMaxY),
+        aShape = [];
+
+    for (var i = 0; i <= x; i++) {
+      aShape[i] = [];
+      for (var j = 0; j <= y; j++) {
+        aShape[i][j] = Math.round(Math.random());
+      }
+    }
+
+    return aShape;
+  }
+
+  /**
    * ConwaysCanvas.prototype.getShape
    *
    * @description Returns a shape array by given number
@@ -95,10 +304,12 @@
    * @return [*] Array
    */
   ConwaysCanvas.prototype.getShape = function(i){
-    var aShape = [];
+    var oSelf = this,
+        aShape = [];
 
     switch(i) {
-      case 0: // Random @TODO: Implement
+      case 0: // random
+        aShape = oSelf.getRandomShape();
         break;
       case 1: // Block
         aShape[0] = [0,0,0,0];
@@ -219,190 +430,6 @@
     }
 
     return aShape;
-  }
-
-  /**
-   * ConwaysCanvas.prototype.reset
-   *
-   * @description Resets the canvas for redrawing.
-   *
-   * @return {*} Canvay
-   */
-  ConwaysCanvas.prototype.reset = function(){
-    var oSelf = this,
-        oCanvas = oSelf.oCanvas;
-
-    oCanvas.clearRect(0, 0, oSelf.nCanvasWidth, oSelf.nCanvasHeight);
-
-    return oSelf;
-  }
-
-  /**
-   * ConwaysCanvas.prototype.iterateMap
-   *
-   * @description Iterates over the map, setting living state of each cell
-   *
-   * @return {*} Canvay
-   */
-  ConwaysCanvas.prototype.iterateMap = function(callback){
-    var oSelf = this;
-
-    callback = callback || function(bValue, nX, nY){ return bValue; };
-
-    for (var i = oSelf.aMap.length - 1; i >= 0; i--) {
-      for (var j = oSelf.aMap[i].length - 1; j >= 0; j--) {
-        oSelf.aNewMap[i][j] = callback(oSelf.aMap[i][j], i, j);
-      }
-    }
-
-    oSelf.aMap = JSON.parse(JSON.stringify(oSelf.aNewMap));
-
-    return oSelf;
-  };
-  
-  /**
-   * ConwaysCanvas.prototype.drawCircleAt
-   *
-   * @description Draws a circle at the given coordinates.
-   *
-   * @return {*} Canvay
-   */
-  ConwaysCanvas.prototype.drawCircleAt = function(nXPos, nYPos){
-    var oSelf = this,
-        oCanvas = oSelf.oCanvas,
-        nXPos = nXPos * oSelf.nCellSize + oSelf.nCellSize/2,
-        nYPos = nYPos * oSelf.nCellSize + oSelf.nCellSize/2;
-      
-    oCanvas.beginPath();
-    oCanvas.arc(nXPos, nYPos, oSelf.nCellSize/2, 0, 2*Math.PI);
-    oCanvas.fill();
-
-    return oSelf;
-  };
-  
-  /**
-   * ConwaysCanvas.prototype.setup
-   *
-   * @description Bootstraps the logic.
-   *
-   * @return {*} Canvay
-   */
-  ConwaysCanvas.prototype.setup = function(){
-    var oSelf = this;
-
-    oSelf.reset();
-    oSelf.drawGrid();
-
-    return oSelf;
-  };
-
-  /**
-   * ConwaysCanvas.prototype.drawGrid
-   *
-   * @description Draws the given grid.
-   *
-   * @return {*} Canvay
-   */
-  ConwaysCanvas.prototype.drawGrid = function(){
-    var oSelf = this,
-        oCanvas = oSelf.oCanvas;
-
-    for (
-      var nPointer = 0;
-      nPointer < Math.round(oSelf.nCanvasHeight/oSelf.nCellSize);
-      nPointer++
-    ) {
-        var nCurrentPosition = nPointer * oSelf.nCellSize - oSelf.nOffset;
-        oCanvas.beginPath();
-        oCanvas.moveTo(oSelf.nOffset, nCurrentPosition);
-        oCanvas.lineTo(oSelf.nCanvasWidth, nCurrentPosition);
-        oCanvas.stroke();
-    }
-
-    for (
-      var nPointer = 0;
-      nPointer < Math.round(oSelf.nCanvasWidth/oSelf.nCellSize);
-      nPointer++
-    ) {
-        var nCurrentPosition = nPointer * oSelf.nCellSize - oSelf.nOffset;
-        oCanvas.beginPath();
-        oCanvas.moveTo(nCurrentPosition, oSelf.nOffset);
-        oCanvas.lineTo(nCurrentPosition, oSelf.nCanvasHeight);
-        oCanvas.stroke();
-    }
-
-    return oSelf;
-  };
-
-  /**
-   * ConwaysCanvas.prototype.countNeighbours
-   *
-   * @description Counts and returns the amount of neighbours for a given cell.
-   *
-   * @return {Number} nNeighbourCount
-   */
-  ConwaysCanvas.prototype.countNeighbours = function(nXPos, nYPos){
-    var oSelf = this,
-        aMap = oSelf.aMap,
-        nNeighbourCount = 0;
-
-    nNeighbourCount += (aMap[nXPos-1] && aMap[nXPos-1][nYPos-1]) ? 1 : 0;
-    nNeighbourCount += (aMap[nXPos-1] && aMap[nXPos-1][nYPos]) ? 1 : 0;
-    nNeighbourCount += (aMap[nXPos-1] && aMap[nXPos-1][nYPos+1]) ? 1 : 0;
-    nNeighbourCount += (aMap[nXPos] && aMap[nXPos][nYPos-1]) ? 1 : 0;
-    nNeighbourCount += (aMap[nXPos] && aMap[nXPos][nYPos+1]) ? 1 : 0;
-    nNeighbourCount += (aMap[nXPos+1] && aMap[nXPos+1][nYPos-1]) ? 1 : 0;
-    nNeighbourCount += (aMap[nXPos+1] && aMap[nXPos+1][nYPos]) ? 1 : 0;
-    nNeighbourCount += (aMap[nXPos+1] && aMap[nXPos+1][nYPos+1]) ? 1 : 0;
-
-    return nNeighbourCount;
-  };
-
-  /**
-   * ConwaysCanvas.prototype.checkLivingState
-   *
-   * @description Checks whether a cell is alive or dead, draws a circle if it's alive.
-   *
-   * @return {Boolean} bIsAlive
-   */
-  ConwaysCanvas.prototype.checkLivingState = function(bIsAlive, nXPos, nYPos){
-    var oSelf = this,
-        nNeighbourCount = oSelf.countNeighbours(nXPos, nYPos);
-
-    if (nNeighbourCount < 2) {
-      bIsAlive = false;
-    } else if (!bIsAlive && nNeighbourCount === 3) {
-      bIsAlive = true;
-    } else if (bIsAlive && (nNeighbourCount === 3 || nNeighbourCount === 2)) {
-      bIsAlive = true; 
-    } else if (nNeighbourCount > 3) {
-      bIsAlive = false;
-    };
-
-    if (bIsAlive) {
-      oSelf.drawCircleAt(nXPos, nYPos);
-    }
-
-    return bIsAlive;
-  };
-
-  /**
-   * ConwaysCanvas.prototype.play
-   *
-   * @description Plays one round of CGoL.
-   *
-   * @return {*} Canvay
-   */
-  ConwaysCanvas.prototype.play = function(){
-    var oSelf = this;
-
-    oSelf.reset();
-    oSelf.drawGrid();
-    oSelf.iterateMap(function(bIsAlive, nXPos, nYPos){
-      return oSelf.checkLivingState(bIsAlive, nXPos, nYPos);
-    });
-
-    return oSelf;
   }
 
   if (!window.Canvay) {
