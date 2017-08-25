@@ -311,6 +311,7 @@
       case 0: // random
         aShape = oSelf.getRandomShape();
         break;
+      // Shapes from: https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life
       case 1: // Block
         aShape[0] = [0,0,0,0];
         aShape[1] = [0,1,1,0];
@@ -411,8 +412,25 @@
         aShape[15] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
         aShape[16] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
         break;
-//      case 13: // Pentadecathlon
-// @TODO: Implement from: https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life
+      case 13: // Pentadecathlon
+        aShape[0]  = [0,0,0,0,0,0,0,0,0,0,0];
+        aShape[1]  = [0,0,0,0,0,0,0,0,0,0,0];
+        aShape[2]  = [0,0,0,0,0,0,0,0,0,0,0];
+        aShape[3]  = [0,0,0,0,0,0,0,0,0,0,0];
+        aShape[4]  = [0,0,0,0,1,1,1,0,0,0,0];
+        aShape[5]  = [0,0,0,0,1,0,1,0,0,0,0];
+        aShape[6]  = [0,0,0,0,1,1,1,0,0,0,0];
+        aShape[7]  = [0,0,0,0,1,1,1,0,0,0,0];
+        aShape[8]  = [0,0,0,0,1,1,1,0,0,0,0];
+        aShape[9]  = [0,0,0,0,1,1,1,0,0,0,0];
+        aShape[10] = [0,0,0,0,1,0,1,0,0,0,0];
+        aShape[11] = [0,0,0,0,1,1,1,0,0,0,0];
+        aShape[12] = [0,0,0,0,0,0,0,0,0,0,0];
+        aShape[13] = [0,0,0,0,0,0,0,0,0,0,0];
+        aShape[14] = [0,0,0,0,0,0,0,0,0,0,0];
+        aShape[15] = [0,0,0,0,0,0,0,0,0,0,0];
+        aShape[16] = [0,0,0,0,0,0,0,0,0,0,0];
+        break;
       case 14: // Glider a
         aShape[0] = [0,0,0,0,0];
         aShape[1] = [0,0,1,0,0];
